@@ -1,27 +1,30 @@
 # Purpose
 
 If you have to create a jira tickets for your commits, you can use this tool
-to automate the process
+to automate the process.
 
-Just replace `git commit` with `git jira`
+Just replace `git commit` with `git jira`.
 
 # Installation
 
-Copy git-jira into your `$PATH`.
+Copy **git-jira** into your `$PATH`.
 
-Install `jq` (`apt-get install jq`)
+Install `jq` (`apt-get install jq`).
 
 # How it works
 
 It will take the brief description of your git commit message as ticket
 title and will put the body of the git commit message into the description.
 
-The commit message you specify will get put in front of your git commit message.
+The ticket key will get put in front of your git commit message.
 
 For example: `git jira -m "Bar"` will create a ticket in the project `FOO` (see
-configuration) and will put the newly created ticket key (e.g. `FOO-123`) in front
-of the commit message: `FOO-123: Bar` - without specifying the body the
+setup description) and will put the newly created ticket key (e.g. `FOO-123`) in
+front of the commit message: `FOO-123: Bar` - without specifying the body the
 description in the newly created ticket will stay empty.
+
+> Parameters are just forwarded to `git commit` - but the ticket is only created when
+using `-m "message"`.
 
 # Setup
 
