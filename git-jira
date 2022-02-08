@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# This git util creates jira tickets with the git brief message being the title and the git
+# commit message body being the description of the ticket. Afterwards it will adopt the commit
+# message to include the jira ticket key
+# https://developer.atlassian.com/server/jira/platform/jira-rest-api-examples/
+
+#set -x
+
+function usage() {
+	echo >&2 -e $@
+	echo >&2
+ 	echo >&2 "git config jira.project <project> (the jira project name)"
+	echo >&2 "git config jira.url https://jira (the base url)"
+	echo >&2 "git config jira.password <pwd>"
+	echo >&2 "git config jira.username <user> (default is $USER)"
+	exit 1
+}
+
+JIRA_PROJECT=$(git config jira.project)
+if [ -z "$JIRA_PROJECT" ]; then
+	usage "No jira project set"
+fi
+
+JIRA_URL=$(git config jira.url)
+if [ -z "$JIRA_URL" ]; then
+	usage "No jira url set"
+fi
+
+JIRA_USERNAME=$(git config jira.username)
+if [ -z "$JIRA_USERNAME" ]; then
+	JIRA_USERNAME=${USER}
+fi
+if [ -z "$JIRA_USERNAME" ]; then
+	usage "No jira username set"
+fi
+
+JIRA_PASSWORD=$(git config jira.password)
+if [ -z "$JIRA_PASSWORD" ]; then
+	usage "No jira password set"
+fi
+
+JIRA_ISSUETYPE=$(git config jira.issuetype)
+if [ -z "$JIRA_ISSUETYPE" ]; then
+	JIRA_ISSUETYPE="Task"
+fi
+
+jq --version >/dev/null 2>&1 || { echo >&2 "jq is not installed. Aborting."; exit 1; }
+
+function create_jira_ticket() {
+	local brief=$1
+	local description=$(echo $2 | jq -R -s)
+	local data='{
+		"fields": {
+			"project": {
+				"key": "'$JIRA_PROJECT'"
+			},
+			"summary": "'$brief'",
+			"description": "'$description'",
+			"issuetype": {
+				"name": "'$JIRA_ISSUETYPE'"
+			}
+		}
+	}'
+	local ticket_key=$(curl -D- -v -k -u "$JIRA_USERNAME:$JIRA_PASSWORD" -X POST --data "$data" -H "Content-Type: application/json" ${JIRA_URL}/rest/api/2/issue/ 2>/dev/null | jq -r '.key')
+	echo $ticket_key
+}
+
+declare -a args
+while [[ -n "$1" ]]; do
+	case $1 in
+	-h|--help)
+		usage "$0 -m \"brief\n\ndescription\""
+		;;
+	-m)
+		shift
+		commitmsg=$1
+		brief=$(printf "$commitmsg\n" | head -1)
+		description=$(printf "$commitmsg\n" | tail -n +2)
+		ticket_key=$(create_jira_ticket "$brief" "$description")
+		finalmsg=$(printf "$ticket_key: $brief\n\n$description")
+		args+=("-m$finalmsg")
+		;;
+	*)
+		args+=("$1")
+		;;
+	esac
+	shift
+done
+
+git commit "${args[*]}"
+
