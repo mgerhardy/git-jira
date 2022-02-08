@@ -78,6 +78,10 @@ while [[ -n "$1" ]]; do
 		brief=$(printf "$commitmsg\n" | head -1)
 		description=$(printf "$commitmsg\n" | tail -n +2)
 		ticket_key=$(create_jira_ticket "$brief" "$description")
+		if [ -z "$ticket_key" ]; then
+			echo >&2 "Failed to create the jira ticket"
+			exit 1
+		fi
 		finalmsg=$(printf "$ticket_key: $brief\n\n$description")
 		args+=("-m$finalmsg")
 		;;
@@ -89,4 +93,5 @@ while [[ -n "$1" ]]; do
 done
 
 git commit "${args[*]}"
+echo "$JIRA_URL/browse/$ticket_key"
 
