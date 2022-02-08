@@ -49,7 +49,7 @@ jq --version >/dev/null 2>&1 || { echo >&2 "jq is not installed. Aborting."; exi
 
 function create_jira_ticket() {
 	local brief=$1
-	local description=$(echo $2 | jq -R -s)
+	local description=$(echo $2 | sed 's/\n/\\\\n/g')
 	local data='{
 		"fields": {
 			"project": {
@@ -62,7 +62,7 @@ function create_jira_ticket() {
 			}
 		}
 	}'
-	local ticket_key=$(curl -D- -v -k -u "$JIRA_USERNAME:$JIRA_PASSWORD" -X POST --data "$data" -H "Content-Type: application/json" ${JIRA_URL}/rest/api/2/issue/ 2>/dev/null | jq -r '.key')
+	local ticket_key=$(curl -k -u "$JIRA_USERNAME:$JIRA_PASSWORD" -X POST --data "$data" -H "Content-Type: application/json" ${JIRA_URL}/rest/api/2/issue/ 2>/dev/null | jq -r '.key')
 	echo $ticket_key
 }
 
