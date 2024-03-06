@@ -48,8 +48,6 @@ if [ -z "$JIRA_ISSUETYPE" ]; then
 	JIRA_ISSUETYPE="Task"
 fi
 
-jq --version >/dev/null 2>&1 || { echo >&2 "jq is not installed. Aborting."; exit 1; }
-
 function create_jira_ticket() {
 	local brief=$1
 	local description=$(echo $2 | sed 's/\n/\\\\n/g')
