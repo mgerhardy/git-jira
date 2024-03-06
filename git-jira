@@ -17,6 +17,9 @@ function usage() {
 	exit 1
 }
 
+# Check if jq is installed
+jq --version >/dev/null 2>&1 || { echo >&2 "jq is not installed. Please install jq (https://stedolan.github.io/jq/download/) before running this script. Aborting."; exit 1; }
+
 JIRA_PROJECT=$(git config jira.project)
 if [ -z "$JIRA_PROJECT" ]; then
 	usage "No jira project set"
@@ -101,4 +104,3 @@ done
 
 git commit "${args[*]}"
 echo "$JIRA_URL/browse/$ticket_key"
-
