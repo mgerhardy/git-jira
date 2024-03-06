@@ -63,6 +63,10 @@ function create_jira_ticket() {
 		}
 	}'
 	local ticket_key=$(curl -k -u "$JIRA_USERNAME:$JIRA_PASSWORD" -X POST --data "$data" -H "Content-Type: application/json" ${JIRA_URL}/rest/api/2/issue/ 2>/dev/null | jq -r '.key')
+	if [ -z "$ticket_key" ]; then
+		echo >&2 "Failed to create the jira ticket"
+		exit 1
+	fi
 	echo $ticket_key
 }
 
@@ -74,6 +78,9 @@ while [[ -n "$1" ]]; do
 		;;
 	-m)
 		shift
+		if [ -z "$1" ]; then
+			usage "No commit message specified after -m flag"
+		fi
 		commitmsg=$1
 		brief=$(printf "$commitmsg\n" | head -1)
 		description=$(printf "$commitmsg\n" | tail -n +2)
